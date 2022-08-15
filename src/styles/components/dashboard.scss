@@ -1,0 +1,41 @@
+* {
+  all: revert;
+}
+
+:host {
+  --nav-width: 16rem;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  inset: 0 0 0 auto;
+  transition: width 0.33s ease-in-out;
+}
+
+:host(.nav-closed) {
+  width: calc(100% + var(--nav-width));
+}
+
+nav {
+  width: var(--nav-width);
+  background: #eee;
+  flex: 0 0 var(--nav-width)
+}
+
+#page-content {
+  flex: 1 0 100%;
+  height: 100%;
+  background: #999;
+  overflow-y: scroll;
+}
+
+@media screen and (max-width: 750px) {
+  :host, :host(.nav-closed) {
+    width: 100%;
+  }
+
+  nav {
+    position: fixed;
+    inset: 0 auto 0 0;
+  }
+}

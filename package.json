@@ -1,0 +1,24 @@
+{
+  "name": "thelog-html",
+  "version": "1.0.0",
+  "description": "Frontend of log.football",
+  "license": "MIT",
+  "typecheck": "tsc --noEmit -p tsconfig.json",
+  "scripts": {
+    "dev": "parcel src/pages/sitemap.html -p 7777",
+    "build": "parcel build src/pages/sitemap.html"
+  },
+  "devDependencies": {
+    "@parcel/packager-raw-url": "2.6.2",
+    "@parcel/transformer-sass": "2.6.2",
+    "@parcel/transformer-webmanifest": "2.6.2",
+    "@tsconfig/recommended": "^1.0.1",
+    "parcel": "^2.6.2"
+  },
+  "dependencies": {
+    "@wcj/markdown-to-html": "^2.0.14",
+    "lit": "^2.2.8",
+    "lodash.get": "^4.4.2"
+  },
+  "browserslist": "> 1%, last 2 versions, not dead"
+}
