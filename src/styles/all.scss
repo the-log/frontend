@@ -4,6 +4,11 @@
     all: unset;
   }
 
+  input:not([type="checkbox"], [type="radio"]) {
+    border: 1px solid currentColor;
+    padding: 0.25rem;
+  }
+
   button,
   a.button {
     box-sizing: border-box;
@@ -89,10 +94,13 @@
   }
 }
 
-
-
 .panel {
   background: var(--bg-02);
   box-shadow: 0 3px 5px var(--bg-05);
   padding: 1rem;
+}
+
+.field-wrapper {
+  display: flex;
+  flex-direction: column;
 }

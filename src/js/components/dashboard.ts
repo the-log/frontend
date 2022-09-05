@@ -143,11 +143,22 @@ export class LogDashboard extends QueryMixin(LitElement) {
 
   renderLogIn = () => {
     return html`
-      <form @submit=${this._authFormSubmit}>
-        <input type="email" name="email" placeholder="Email Address" autocomplete="email"/>
-        <input type="password" name="password" placeholder="Password" autocomplete="current-password"/>
-        <input type="submit" hidden />
-      </form>
+      <div class="form-wrapper">
+        <form @submit=${this._authFormSubmit}>
+          <div class="field-wrapper">
+            <label for="email">Email Address</label>
+            <input type="email" name="email" placeholder="Email Address" autocomplete="email"/>
+          </div>
+
+          <div class="field-wrapper">
+            <label for="password">Password</label>
+            <input type="password" name="password" placeholder="Password" autocomplete="current-password"/>
+          </div>
+
+
+          <button type="submit">Log In</button>
+        </form>
+      </div>
     `
   };
 
