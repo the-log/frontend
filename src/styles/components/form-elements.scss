@@ -1,0 +1,12 @@
+button, input, textarea, select {
+  all: unset;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button {
+  box-sizing: border-box;
+  cursor: pointer;
+}

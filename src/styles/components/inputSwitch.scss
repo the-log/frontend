@@ -1,0 +1,35 @@
+fieldset {
+  all: unset;
+  display: inline-flex;
+  gap: 1px;
+}
+
+input:focus-visible + label,
+label:hover {
+  background-color: var(--highlight-strong);
+}
+
+label {
+  background-color: var(--bg-05);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:first-of-type {
+    border-radius: 5px 0 0 5px;
+  }
+
+  &:last-of-type {
+    border-radius: 0 5px 5px 0;
+  }
+
+  svg {
+    width: 1em;
+    height: 1em;
+  }
+}
+
+input:checked + label {
+  background-color: var(--mono-07);
+}

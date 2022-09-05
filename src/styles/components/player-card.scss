@@ -1,0 +1,40 @@
+:host {
+  --img-size: 175px;
+  display: grid;
+  grid-template-columns: var(--img-size) 1fr 1fr;
+
+  & > * {
+    grid-column: span 1;
+  }
+}
+
+.headshot {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  overflow: clip;
+  background-color: var(--mono-04);
+  border: 2px var(--highlight-strong);
+
+  &:after {
+    content: '';
+    position: absolute;
+    inset: -25px;
+    z-index: 1;
+    background-size:75%;
+    background-position:center;
+    background-color: var(--color);
+    background-image: var(--image);
+    filter: blur(1px);
+    opacity: 70%;
+  }
+
+  img {
+    position: relative;
+    z-index: 2;
+    object-fit: cover;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+    width: var(--img-size);
+    height: var(--img-size);
+  }
+}

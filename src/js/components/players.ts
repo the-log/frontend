@@ -1,9 +1,15 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, unsafeCSS, PropertyValueMap } from "lit";
 import { customElement, property, state } from 'lit/decorators.js';
 import QueryMixin from "../utilities/QueryMixin";
 import Queries from "../utilities/Queries";
+import "./playerCard";
+import "./inputSwitch";
+import { LogPlayerCard } from "./playerCard";
 import formatMoney from "../utilities/formatMoney";
 import { Player } from "../types/defs";
+import basestyles from "bundle-text:../../styles/all.scss";
+import { dots } from "../utilities/icons";
+import { unsafeHTML } from "lit/directives/unsafe-html";
 
 @customElement('log-players')
 export class LogPlayers extends QueryMixin(LitElement) {
@@ -12,19 +18,15 @@ export class LogPlayers extends QueryMixin(LitElement) {
   playerCount = 0;
 
   @state()
-  page = 0;
-
-  @state()
   playerData: Player[] = [];
 
-  @state()
-  sortProperty?: string | null;
-
-  @state()
-  sortAsc = true;
-
-  @state()
-  queryVariables?: any;
+  @property({attribute: false})
+  queryVariables: string = JSON.stringify({
+    take: 50,
+    skip: 0,
+    filters: {},
+    order: {pointsLastYear: "desc"}
+  });
 
   sortTable(event: PointerEvent) {
     const sortBy = (event.target as Element)?.getAttribute('sortby');
@@ -48,70 +50,103 @@ export class LogPlayers extends QueryMixin(LitElement) {
 
   playerSearchFormSubmit(e: SubmitEvent) {
     e.preventDefault();
-    console.log(e.target);
+
+    const {queryVariables} = this;
+
+    const vars = JSON.parse(queryVariables);
+
+    // @ts-ignore
+    const input = (e.target! as HTMLFormElement).elements.name.value;
+    Object.assign(vars.filters, {name: {contains: input, mode: 'insensitive'}});
+    this.queryVariables = JSON.stringify(vars);
   }
 
   render() {
+    const {filters} = JSON.parse(this.queryVariables);
+
+    const contractStatus = filters?.contract || 'either';
+
     return html`
-      <form @submit="${this.playerSearchFormSubmit}">
+      <form class="panel" @submit="${this.playerSearchFormSubmit}">
+        <label htmlFor="name">Player Name</label>
         <input type="text" name="name" placeholder="Player Name">
         <input type="submit" value="submit" hidden>
       </form>
-      <table>
-        <thead @click=${this.sortTable}>
-          <tr>
-            <th sortby="name">Player</th>
-            <th sortby="position">Position</th>
-            <th sortby="nflteam">NFL Team</th>
-            <th>LOG Team</th>
-            <th>Salary</th>
-            <th>Years</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${this.playerData.map(player => html`
+      <div class="panel">
+        <table>
+          <thead @click=${this.sortTable}>
             <tr>
-              <td>${player.name}</td>
-              <td>${player.position}</td>
-              <td>${player.team}</td>
-              <td>${player.contract?.team?.name}</td>
-              <td align="right">${formatMoney(player.contract?.salary)}</td>
-              <td>${player.contract?.years}</td>
+              <th sortby="name">Player</th>
+              <th sortby="position">Position</th>
+              <th sortby="nflteam">NFL Team</th>
+              <th>LOG Team</th>
+              <th>Salary</th>
+              <th>Years</th>
+              <th></th>
             </tr>
-          `)}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            ${this.playerData.map(player => html`
+              <tr>
+                <td>${player.name}</td>
+                <td>${player.position}</td>
+                <td>${player.team}</td>
+                <td>${player.contract?.team?.name}</td>
+                <td>${formatMoney(player.contract?.salary)}</td>
+                <td>${player.contract?.years}</td>
+                <td>
+                <button class="icon" contractType="${status}" @click="${(e: Event) => {
+                  const thisRow = (e.target as HTMLElement).closest('tr');
+                  const nextRow = thisRow?.nextElementSibling! as HTMLElement;
+
+                  if (nextRow.hidden) {
+                    (nextRow.querySelector('log-player-card') as LogPlayerCard)!.getPlayerInfo();
+                  }
+                  nextRow.hidden = !nextRow.hidden;
+
+                }}">
+                  ${dots('1em', '1em')}
+                </button>
+                </td>
+              </tr>
+              <tr hidden>
+                <td colspan="999">
+                  <log-player-card .player=${player}></log-player-card>
+                </td>
+              </tr>
+            `)}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 
   connectedCallback() {
     super.connectedCallback();
 
-    this.runQuery(Queries["all-players"])
+    const {queryVariables} = this;
+
+    this.runQuery(Queries["all-players"], JSON.parse(queryVariables))
       .then(({data}) => {
         this.playerCount = data.playerCount;
         this.playerData = data.players;
       });
   }
 
+  updated(changedProperties: Map<PropertyKey, unknown>) {
+    if (changedProperties.has('queryVariables')) {
+      const {queryVariables} = this;
+
+      this.runQuery(Queries["all-players"], JSON.parse(queryVariables))
+        .then(({data}) => {
+          this.playerCount = data.playerCount;
+          this.playerData = data.players;
+        });
+    }
+  }
+
   static styles = css`
-    table {
-      text-align: left;
-      border-collapse: collapse;
-    }
-
-    tbody tr:nth-child(2n) {
-      background-color: #ccc;
-    }
-
-    td, th {
-      padding: 0.25rem 0.5rem;
-    }
-
-    th {
-      padding-bottom: 1rem;
-      cursor: pointer;
-    }
+    ${unsafeCSS(basestyles)}
   `
 
 }

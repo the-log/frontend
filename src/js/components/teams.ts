@@ -1,10 +1,14 @@
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, unsafeCSS} from "lit";
 import { customElement, property, state } from 'lit/decorators.js';
 import QueryMixin from "../utilities/QueryMixin";
 import Queries from "../utilities/Queries";
 import formatMoney from "../utilities/formatMoney";
 import { Contract, EVENTS, Team } from "../types/defs";
-import { LogDashboard } from "./dashboard";
+import { setPageTitle } from "./dashboard";
+import basestyles from "bundle-text:../../styles/all.scss";
+import { dots } from "../utilities/icons";
+import "./playerCard";
+import { LogPlayerCard } from "./playerCard";
 
 @customElement('log-teams')
 export class LogTeams extends QueryMixin(LitElement) {
@@ -53,55 +57,57 @@ export class LogTeams extends QueryMixin(LitElement) {
       if (teamAbbr) {
         this.runQuery(Queries["contracts-by-team"], {"abbr": teamAbbr})
           .then(({data}) => {
-            console.log(data);
-
             this.team = data.team
             this.contracts = data.contracts
+
+            this.dispatchEvent(setPageTitle(this.myTeam ? 'My Team' : data.team.name));
           })
       } else {
         this.runQuery(Queries["all-teams"])
           .then(({data}) => {
             this.teams = data.teams
           });
+        this.dispatchEvent(setPageTitle('All Teams'))
       }
     }
   }
 
   renderAllTeams() {
     return html`
-      <h1>TEAMS</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Team</th>
-            <th>Record</th>
-            <th>Salary</th>
-            <th>Years</th>
-            <th>Active</th>
-            <th>DTS</th>
-            <th>IR</th>
-            <th>Waived</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${this.teams.map(team => {
-            const {name, abbreviation: abbr, wins, losses, ties, contractTotals} = team
-            const {salary, years, active, dts, ir, waived} = contractTotals;
-            return html`
-              <tr>
-                <td><a href="/teams/${abbr}">${name}</a></td>
-                <td>${wins}-${losses}-${ties}</td>
-                <td>${formatMoney(salary)}</td>
-                <td>${years}</td>
-                <td>${active}</td>
-                <td>${dts}</td>
-                <td>${ir}</td>
-                <td>${waived}</td>
-              </tr>
-            `
-          })}
-        </tbody>
-      </table>
+      <div class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Record</th>
+              <th>Salary</th>
+              <th>Years</th>
+              <th>Active</th>
+              <th>DTS</th>
+              <th>IR</th>
+              <th>Waived</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${this.teams.map(team => {
+              const {name, abbreviation: abbr, wins, losses, ties, contractTotals} = team
+              const {salary, years, active, dts, ir, waived} = contractTotals;
+              return html`
+                <tr>
+                  <td><a href="/teams/${abbr}">${name}</a></td>
+                  <td>${wins}-${losses}-${ties}</td>
+                  <td>${formatMoney(salary)}</td>
+                  <td>${years}</td>
+                  <td>${active}</td>
+                  <td>${dts}</td>
+                  <td>${ir}</td>
+                  <td>${waived}</td>
+                </tr>
+              `
+            })}
+          </tbody>
+        </table>
+      </div>
     `
   }
 
@@ -111,60 +117,82 @@ export class LogTeams extends QueryMixin(LitElement) {
     const { myTeam } = this;
 
     return html`
-      <h2>${title}</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Team</th>
-            <th>Position</th>
-            <th>Salary</th>
-            <th>Years</th>
-            <th style="${!myTeam ? 'display:none;' : ''}">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${contracts
-            .sort((a: Contract, b: Contract) => {
-              const posWeightA = a.player?.positionWeight + 1 || 999;
-              const posWeightB = b.player?.positionWeight + 1 || 999;
+      <div class="panel">
+        <h2>${title}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Team</th>
+              <th>Position</th>
+              <th>Salary</th>
+              <th>Years</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${contracts
+              .sort((a: Contract, b: Contract) => {
+                const posWeightA = a.player?.positionWeight + 1 || 999;
+                const posWeightB = b.player?.positionWeight + 1 || 999;
 
-              if (posWeightA > posWeightB) return 1;
-              if (posWeightA < posWeightB) return -1;
-              return 0;
-            })
-            .map((contract: Contract) => {
-            const { player, salary, years, status } = contract
-            const { name, team, position } = player || {};
-            return html`
-              <tr>
-                <td>${name}</td>
-                <td>${team}</td>
-                <td>${position}</td>
-                <td>${formatMoney(salary)}</td>
-                <td>${years}</td>
-                <th style="${!myTeam ? 'display:none;' : ''}">
-                  <button type="${status}" @click="${(e) => {e.target.nextElementSibling.showModal()}}">Test</button>
-                  <dialog @focusout="${(e) => {
-                    console.log(e.relatedTarget, e)
-                  }}">
-                    <h1>${name}</h1>
-                    <p>Lorem ipsum dolor sit amet.</p>
-                    <a href="#!">Link</a>
-                    <button>Button</button>
-                    <input type="text" />
-                  </dialog>
-                </th>
-              </tr>
-            `
-          })}
-        </tbody>
-      </table>
+                if (posWeightA > posWeightB) return 1;
+                if (posWeightA < posWeightB) return -1;
+                return 0;
+              })
+              .map((contract: Contract) => {
+              const { player, salary, years, status } = contract
+              const { name, team, position } = player || {};
+              return html`
+                <tr class="player-overview">
+                  <td>${name}</td>
+                  <td>${team}</td>
+                  <td>${position}</td>
+                  <td>${formatMoney(salary)}</td>
+                  <td>${years}</td>
+                  <td>
+                    ${this.renderActions(contract)}
+                  </td>
+                </tr>
+                <tr class="player-details" hidden>
+                  <td colspan="999">
+                    <log-player-card .player=${player}></log-player-card>
+                  </td>
+                </tr>
+              `
+            })}
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
+  renderActions(contract: Contract) {
+    const {
+      status,
+      player: {
+        name,
+      }
+    } = contract;
+
+    return html`
+      <button class="icon" contractType="${status}" @click="${(e: Event) => {
+        const thisRow = (e.target as HTMLElement).closest('tr');
+        const nextRow = thisRow?.nextElementSibling! as HTMLElement;
+
+        if (nextRow.hidden) {
+          (nextRow.querySelector('log-player-card') as LogPlayerCard)!.getPlayerInfo();
+        }
+        nextRow.hidden = !nextRow.hidden;
+
+      }}">
+        ${dots('1em', '1em')}
+      </button>
     `
   }
 
   renderOneTeam() {
-    const {myTeam, team, contracts} = this;
+    const {team, contracts} = this;
     const {
       active,
       dts,
@@ -180,16 +208,17 @@ export class LogTeams extends QueryMixin(LitElement) {
     const waivedContracts = contracts.filter(({status}) => status === 'waived');
 
     return html`
-      <h1>${myTeam ? 'My Team' : team?.name}</h1>
-      <h2>Contract Totals</h2>
-      <ul>
-        <li>Active: ${active}</li>
-        <li>DTS: ${dts}</li>
-        <li>IR: ${ir}</li>
-        <li>Waived: ${waived}</li>
-        <li>Salary: ${formatMoney(salary)} (${formatMoney(100000 - (salary || 0))} remaining)</li>
-        <li>Years: ${years}</li>
-      </ul>
+      <div class="panel">
+        <h2>Contract Totals</h2>
+        <ul>
+          <li>Active: ${active}</li>
+          <li>DTS: ${dts}</li>
+          <li>IR: ${ir}</li>
+          <li>Waived: ${waived}</li>
+          <li>Salary: ${formatMoney(salary)} (${formatMoney(100000 - (salary || 0))} remaining)</li>
+          <li>Years: ${years}</li>
+        </ul>
+      </div>
 
       ${this.renderRoster('Active Contracts', activeContracts)}
 
@@ -211,4 +240,8 @@ export class LogTeams extends QueryMixin(LitElement) {
       return this.renderAllTeams()
     }
   }
+
+  static styles = css`
+    ${unsafeCSS(basestyles)}
+  `
 }

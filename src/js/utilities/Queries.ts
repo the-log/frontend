@@ -41,15 +41,26 @@ export default {
     }
   `,
   'all-players': `
-    query {
+    query (
+      $take: Int,
+      $skip: Int,
+      $filters: PlayerWhereInput,
+      $order: [PlayerOrderByInput!]!
+    ) {
       playersCount
-      players (take: 50, orderBy: {overallRank: asc}) {
+      players (
+        take: $take,
+        skip: $skip,
+        orderBy: $order,
+        where: $filters
+      ) {
         name
         team
         position
         positionWeight
         positionRank
         overallRank
+        espn_id
         contract {
           team {
             name
@@ -93,6 +104,7 @@ export default {
         }
       ) {
         player {
+          espn_id
           name
           team
           position
@@ -109,6 +121,21 @@ export default {
       ) {
         name
         contractTotals
+      }
+    }
+  `,
+  'stats-by-player': `
+    query ($id: Int) {
+      player (
+        where: {
+          espn_id: $id
+        }
+      ) {
+        fullStats
+        pointsThisYear
+        pointsLastYear
+        pointsThisYearProj
+        pointsThisWeekProj
       }
     }
   `

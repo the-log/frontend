@@ -1,10 +1,9 @@
-* {
-  all: revert;
-}
-
 :host {
   --nav-width: 16rem;
+  box-sizing: border-box;
   display: flex;
+  gap: 1rem;
+  padding: 1rem;
   width: 100%;
   height: 100%;
   position: fixed;
@@ -17,25 +16,99 @@
 }
 
 nav {
-  width: var(--nav-width);
-  background: #eee;
-  flex: 0 0 var(--nav-width)
+  --width: calc(var(--nav-width) - 1rem);
+  width: var(--width);
+  flex: 0 0 var(--width);
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+a,
+button {
+  color: inherit;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  text-decoration: none;
+
+  nav & {
+    width: 100%;
+  }
 }
 
 #page-content {
-  flex: 1 0 100%;
+  flex: 1 1 100%;
   height: 100%;
-  background: #999;
   overflow-y: scroll;
+  scrollbar-width: none;
+  position: relative;
+}
+
+header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin-bottom: 2rem;
+  button:first-child {
+    align-self: center;
+  }
+}
+
+main {
+  --cols: 2;
+  --gap-width: 1rem;
+  --padding-width: 0.5rem;
+  --col-width: calc((100% - ((var(--cols) - 1) * var(--gap-width))) / var(--cols));
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--col-width));
+  gap: var(--gap-width);
+  padding: 0 var(--padding-width);
+  position: relative;
+  z-index: 0;
+
+  @media (min-width: 600px) {
+    --cols: 4;
+  }
+
+  @media (min-width: 900px) {
+    --cols: 8;
+  }
+
+  @media (min-width: 1200px) {
+    --cols: 12;
+  }
+}
+
+::slotted(*) {
+  display: contents;
+}
+
+footer {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--mono-07)
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
 
 @media screen and (max-width: 750px) {
-  :host, :host(.nav-closed) {
-    width: 100%;
+  :host {
+    width: calc(100% + var(--nav-width));
+    transition-property: translate;
   }
 
-  nav {
-    position: fixed;
-    inset: 0 auto 0 0;
+  :host(:not(.nav-closed)) {
+    translate: var(--nav-width);
   }
 }

@@ -1,7 +1,8 @@
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, unsafeCSS } from "lit";
 import {unsafeHTML} from "lit/directives/unsafe-html";
 import { customElement, property, state } from 'lit/decorators.js';
 import markdown from '@wcj/markdown-to-html';
+import basestyles from "bundle-text:../../styles/all.scss";
 
 @customElement('log-rulebook')
 export class LogRulebook extends LitElement {
@@ -36,7 +37,7 @@ export class LogRulebook extends LitElement {
     return html`
       <h1>The League of Ordinary Gentlemen Rulebook</h1>
       ${this.pages.map(page => html`
-        <div style="margin: 2em 0;">
+        <div class="panel">
           ${unsafeHTML((markdown(page) as string))}
         </div>
       `)}
@@ -48,4 +49,8 @@ export class LogRulebook extends LitElement {
       this.fetchAllPages(this.tableOfContents);
     }
   }
+
+  static styles = css`
+    ${unsafeCSS(basestyles)}
+  `;
 }

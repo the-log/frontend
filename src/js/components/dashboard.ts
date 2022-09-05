@@ -1,34 +1,46 @@
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, unsafeCSS } from "lit";
 import { customElement, property } from 'lit/decorators.js';
 import QueryMixin from "../utilities/QueryMixin";
 import Queries from "../utilities/Queries";
 import { EVENTS, AuthenticatedUser } from "../types/defs";
-import { home, banner, helmet, transaction, rules } from "../utilities/icons";
-
-const loginFormMarkup = `
-  <form slot="login">
-    <input type="email" name="email" placeholder="Email Address"/>
-    <input type="password" name="password" placeholder="Password"/>
-    <input type="submit" hidden />
-  </form>
-`;
+import { home, banner, helmet, transaction, rules, logout, menu } from "../utilities/icons";
+import basestyles from "bundle-text:../../styles/all.scss";
+import componentStyles from "bundle-text:../../styles/components/dashboard.scss";
 
 interface FormSubmitValues extends HTMLFormControlsCollection {
   email?: HTMLInputElement;
   password?: HTMLInputElement;
 }
 
+const localStorageKey = 'the-log-navIsOpen';
+
+const updatePageTitleEvent = 'updatePageTitle';
+
+export function setPageTitle(newTitle: String) {
+  return new CustomEvent(updatePageTitleEvent, {
+    bubbles: true,
+    cancelable: false,
+    composed: true,
+    detail: {
+      'title': newTitle,
+    }
+  });
+}
+
 @customElement('log-dashboard')
 export class LogDashboard extends QueryMixin(LitElement) {
 
   @property({attribute: false, type: Boolean, reflect: true})
-  private _navOpen = false;
+  private _navOpen?: Boolean;
 
   @property({attribute: false})
   private _isLoggedIn?: Boolean | undefined;
 
   @property({attribute: false})
   user?: AuthenticatedUser;
+
+  @property({attribute:'title', reflect: false})
+  pageTitle?: string;
 
   private eventUpdateLoginStatus = new CustomEvent(EVENTS.didUpdateLoginStatus, {
     bubbles: true,
@@ -79,14 +91,25 @@ export class LogDashboard extends QueryMixin(LitElement) {
   }
 
   private _toggleNavTray() {
-    this._navOpen = !this._navOpen;
-    this.classList.toggle('nav-closed')
+    const isOpen = this._navOpen;
+
+    if (isOpen) {
+      localStorage.removeItem(localStorageKey);
+    } else {
+      localStorage.setItem(localStorageKey, 'true');
+    }
+
+    this._navOpen = !isOpen;
+    this.classList.toggle('nav-closed');
   }
 
   connectedCallback() {
-    const { _authFormSubmit: onLogin } = this;
 
     super.connectedCallback();
+
+    const prefersNavOpen = Boolean(localStorage.getItem(localStorageKey));
+    this._navOpen = prefersNavOpen;
+    this.classList.toggle('nav-closed', prefersNavOpen);
 
     // Check authentication status on page load
     this._checkLoginStatus();
@@ -97,24 +120,23 @@ export class LogDashboard extends QueryMixin(LitElement) {
       this._checkLoginStatus.bind(this)
     );
 
-    // Inject form into main document.
-    // Form cannot be in shadowdom because `submit` event is not composed.
-    this.insertAdjacentHTML('afterbegin', loginFormMarkup);
-
     // Prevent form submissions from triggering page reload.
     this.addEventListener('submit', (e) => {e.preventDefault()})
     //this.addEventListener('submit', onLogin, true);
+
+    this.addEventListener(updatePageTitleEvent, (event) => {
+      // @ts-ignore
+      this.pageTitle = event.detail.title;
+    });
   }
 
   protected updated(changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
     if (changedProperties.has('user')) {
-      console.log('user changed!');
 
       const { dispatchEvent, eventUpdateLoginStatus } = this;
       // Allow other components to respond to auth status changes.
       setTimeout(() => {
         dispatchEvent(eventUpdateLoginStatus);
-        console.log(eventUpdateLoginStatus);
       }, 0);
     }
   }
@@ -122,8 +144,8 @@ export class LogDashboard extends QueryMixin(LitElement) {
   renderLogIn = () => {
     return html`
       <form @submit=${this._authFormSubmit}>
-        <input type="email" name="email" placeholder="Email Address"/>
-        <input type="password" name="password" placeholder="Password"/>
+        <input type="email" name="email" placeholder="Email Address" autocomplete="email"/>
+        <input type="password" name="password" placeholder="Password" autocomplete="current-password"/>
         <input type="submit" hidden />
       </form>
     `
@@ -132,14 +154,14 @@ export class LogDashboard extends QueryMixin(LitElement) {
   renderNavigation = () => {
     const { _endSession: endSession } = this;
     return html`
-      <nav>
+      <nav class="panel">
         <ul>
-          <li><a href="/">${home('2em', '2em')} Home</a></li>
-          <li><a href="/teams">${banner('2em', '2em')} Teams</a></li>
-          <li><a href="/players">${helmet('2em', '2em')} Players</a></li>
-          <li><a href="/free-agency">${transaction('2em', '2em')} Free Agency</a></li>
-          <li><a href="/rulebook">${rules('2em', '2em')} Rulebook</a></li>
-          <li><button @click="${endSession}">Log Out</button></li>
+          <li><a class="button" href="/">${home('1.5em', '1.5em')} <span>Home</span></a></li>
+          <li><a class="button" href="/teams">${banner('1.5em', '1.5em')} <span>Teams</span></a></li>
+          <li><a class="button" href="/players">${helmet('1.5em', '1.5em')} <span>Players</span></a></li>
+          <li><a class="button" href="/free-agency">${transaction('1.5em', '1.5em')} <span>Free Agency</span></a></li>
+          <li><a class="button" href="/rulebook">${rules('1.5em', '1.5em')} <span>Rulebook</span></a></li>
+          <li><button @click="${endSession}">${logout('1.5em', '1.5em')} <span>Log Out</span></button></li>
         </ul>
       </nav>
     `
@@ -148,14 +170,17 @@ export class LogDashboard extends QueryMixin(LitElement) {
   renderDashboard = () => html`
     ${this.renderNavigation()}
     <div id="page-content">
-      <header>
-        <button @click="${this._toggleNavTray}">Toggle Nav</button>
+      <header class="panel">
+        <button @click="${this._toggleNavTray}" aria-label="Toggle Navigation">${menu('1.5em', '1.5em')}</button>
+        <h1>${this.pageTitle}</h1>
       </header>
       <main>
         <slot></slot>
       </main>
       <footer>
-        &copy; ${(new Date()).getFullYear()}
+        &copy; 2012-${(new Date()).getFullYear()}
+        The League of Ordinary Gentlemen. <br/>
+        All rights reserved.
       </footer>
     </div>
   `;
@@ -169,42 +194,7 @@ export class LogDashboard extends QueryMixin(LitElement) {
   }
 
   static styles = css`
-    :host {
-      --nav-width: 16rem;
-      display: flex;
-      width: 100%;
-      height: 100%;
-      position: fixed;
-      inset: 0 0 0 auto;
-      transition: width 0.33s ease-in-out;
-    }
-
-    :host(.nav-closed) {
-      width: calc(100% + var(--nav-width));
-    }
-
-    nav {
-      width: var(--nav-width);
-      background: #eee;
-      flex: 0 0 var(--nav-width)
-    }
-
-    #page-content {
-      flex: 1 1 100%;
-      height: 100%;
-      background: #999;
-      overflow-y: scroll;
-    }
-
-    @media screen and (max-width: 750px) {
-      :host, :host(.nav-closed) {
-        width: 100%;
-      }
-
-      nav {
-        position: fixed;
-        inset: 0 auto 0 0;
-      }
-    }
-  `
+    ${unsafeCSS(basestyles)}
+    ${unsafeCSS(componentStyles)}
+  `;
 }

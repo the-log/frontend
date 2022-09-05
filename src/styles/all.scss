@@ -1,0 +1,98 @@
+// Unset form element browser styles.
+:where(*) {
+  :where(button, input:not([type="checkbox"], [type="radio"]), textarea, select) {
+    all: unset;
+  }
+
+  button,
+  a.button {
+    box-sizing: border-box;
+    cursor: pointer;
+    padding: 0.5rem;
+
+    &.icon {
+      line-height: 0;
+      border-radius: 50%;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--highlight);
+    }
+  }
+}
+
+* {
+  box-sizing: border-box;
+  grid-column: 1 / -1;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  overflow: hidden;
+  clip: rect(1px,1px,1px,1px);
+  width: 1px;
+  height: 1px;
+  word-wrap: normal;
+}
+
+// Typography
+:where(*) {
+  :where(a) {
+    color: inherit;
+  }
+
+  :where(h1,h2,h3,h4,h5,h6,p,ul,ol) {
+    margin: 0;
+  }
+
+  svg {
+    fill: currentColor;
+  }
+}
+
+// Tables
+:where(*) {
+  table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+  }
+
+  tbody tr:nth-child(4n + 3),
+  tbody tr:nth-child(4n + 4) {
+    background: transparent;
+  }
+
+  tbody tr:where(:nth-child(4n + 1), :nth-child(4n + 2)) {
+    background: var(--highlight);
+  }
+
+  tbody:hover tr:where(:nth-child(4n + 1), :nth-child(4n + 2)) {
+    background: var(--highlight-weak);
+  }
+
+  tbody tr:hover:nth-child(2n + 1) {
+    background: var(--highlight-strong);
+  }
+
+  td, th {
+    padding: 0.25rem 0.5rem;
+  }
+
+  thead th {
+    padding-bottom: 1rem;
+  }
+}
+
+
+
+.panel {
+  background: var(--bg-02);
+  box-shadow: 0 3px 5px var(--bg-05);
+  padding: 1rem;
+}

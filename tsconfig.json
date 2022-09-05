@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "target": "ES2021",
   },
   "extends": "@tsconfig/recommended/tsconfig.json"
 }
