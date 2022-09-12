@@ -11,6 +11,14 @@ import basestyles from "bundle-text:../../styles/all.scss";
 import { dots } from "../utilities/icons";
 import { unsafeHTML } from "lit/directives/unsafe-html";
 
+interface FormValues extends HTMLFormControlsCollection {
+  name: HTMLInputElement;
+  available: RadioNodeList;
+  rookie: RadioNodeList;
+  position: HTMLSelectElement;
+  team: HTMLSelectElement;
+}
+
 @customElement('log-players')
 export class LogPlayers extends QueryMixin(LitElement) {
 
@@ -49,15 +57,104 @@ export class LogPlayers extends QueryMixin(LitElement) {
   }
 
   playerSearchFormSubmit(e: SubmitEvent) {
-    e.preventDefault();
-
     const {queryVariables} = this;
 
     const vars = JSON.parse(queryVariables);
 
-    // @ts-ignore
-    const input = (e.target! as HTMLFormElement).elements.name.value;
-    Object.assign(vars.filters, {name: {contains: input, mode: 'insensitive'}});
+    const form = e.currentTarget as HTMLFormElement;
+
+    function yesNoNull(stringVal: string): boolean | null {
+      const map: any = {
+        'yes': true,
+        'no': false,
+        'either': null,
+      }
+      return map[stringVal]
+    }
+
+    let {
+      name: {
+        value: nameString
+      },
+      available: {
+        value: availableString
+      },
+      rookie: {
+        value: rookieString
+      },
+      position: {
+        value: positionString
+      },
+      team: {
+        value: teamString
+      }
+    } = form.elements as FormValues;
+
+    const nameValue = nameString || null;
+    const availableValue = yesNoNull(availableString);
+    const rookieValue = yesNoNull(rookieString);
+    const positionValue = positionString || null;
+    const teamValue = teamString || null;
+
+    if (nameValue) {
+      vars.filters.name = {
+        contains: nameValue,
+        mode: 'insensitive'
+      };
+    } else {
+      delete vars.filters.name;
+    }
+
+    switch (availableValue) {
+      case true:
+        vars.filters.contract = null
+        break;
+
+      case false:
+        vars.filters.contract = {}
+        break;
+
+      default:
+        delete vars.filters.contract;
+        break;
+    }
+
+    switch (rookieValue) {
+      case true:
+        vars.filters.isRookie = {
+          equals: true,
+        }
+
+        break;
+
+      case false:
+        vars.filters.isRookie = {
+          equals: false,
+        }
+
+        break;
+
+      default:
+        delete vars.filters.isRookie;
+        break;
+    }
+
+    if (positionValue) {
+      vars.filters.position = {
+        equals: positionValue
+      };
+    } else {
+      delete vars.filters.position;
+    }
+
+    if (teamValue) {
+      vars.filters.team = {
+        equals: teamValue
+      }
+    } else {
+      delete vars.filters.team;
+    }
+
     this.queryVariables = JSON.stringify(vars);
   }
 
@@ -67,10 +164,84 @@ export class LogPlayers extends QueryMixin(LitElement) {
     const contractStatus = filters?.contract || 'either';
 
     return html`
-      <form class="panel" @submit="${this.playerSearchFormSubmit}">
+      <form
+        class="panel"
+        @submit=${(e: SubmitEvent) => e.preventDefault()}
+        @change=${this.playerSearchFormSubmit}
+      >
         <label htmlFor="name">Player Name</label>
         <input type="text" name="name" placeholder="Player Name">
-        <input type="submit" value="submit" hidden>
+
+        <fieldset>
+          <legend>Available</legend>
+          <input type="radio" name="available" id="available-yes" value="yes">
+          <label for="available-yes">Yes</label>
+          <input type="radio" name="available" id="available-no" value="no">
+          <label for="available-no">No</label>
+          <input type="radio" name="available" id="available-either" value="either" checked>
+          <label for="available-either">Either</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Rookie Status</legend>
+          <input type="radio" name="rookie" id="rookie-yes" value="yes">
+          <label for="rookie-yes">Yes</label>
+          <input type="radio" name="rookie" id="rookie-no" value="no">
+          <label for="rookie-no">No</label>
+          <input type="radio" name="rookie" id="rookie-either" value="either" checked>
+          <label for="rookie-either">Either</label>
+        </fieldset>
+
+        <select name="position" id="position">
+          <option value="" selected>Any Position</option>
+          <option value="QB">Quarterback</option>
+          <option value="RB">Running Back</option>
+          <option value="WR">Wide Receiver</option>
+          <option value="TE">Tight End</option>
+          <option value="FLEX">Offensive Flex</option>
+          <option value="K">Kicker</option>
+          <option value="DL">Defensive Line</option>
+          <option value="LB">Linebacker</option>
+          <option value="DB">Defensive Back</option>
+          <option value="DP">Defensive Flex</option>
+        </select>
+
+        <select id="team" name="team">
+          <option value="" selected>Any Team</option>
+          <option value="ARI">Arizona Cardinals</option>
+          <option value="ATL">Atlanta Falcons</option>
+          <option value="BAL">Baltimore Ravens</option>
+          <option value="BUF">Buffalo Bills</option>
+          <option value="CAR">Carolina Panthers</option>
+          <option value="CHI">Chicago Bears</option>
+          <option value="CIN">Cincinatti Bengals</option>
+          <option value="CLE">Cleveland Browns</option>
+          <option value="DAL">Dallas Cowboys</option>
+          <option value="DEN">Denver Broncos</option>
+          <option value="DET">Detroit Lions</option>
+          <option value="GB">Green Bay Packers</option>
+          <option value="HOU">Houston Texans</option>
+          <option value="IND">Indianapolis Colts</option>
+          <option value="JAX">Jacksonville Jaguars</option>
+          <option value="KC">Kansas City Cheifs</option>
+          <option value="LAC">Los Angeles Chargers</option>
+          <option value="LAR">Los Angeles Rams</option>
+          <option value="MIA">Miami Dolphins</option>
+          <option value="MIN">Minnesota Vikings</option>
+          <option value="NE">New England Patriots</option>
+          <option value="NO">New Orleans Saints</option>
+          <option value="NYG">New York Giants</option>
+          <option value="NYJ">New York Jets</option>
+          <option value="OAK">Las Vegas Raiders</option>
+          <option value="PHI">Philadelphia Eagles</option>
+          <option value="PIT">Pittsburgh Steelers</option>
+          <option value="SEA">Seattle Seahawks</option>
+          <option value="SF">San Francisco 49ers</option>
+          <option value="TB">Tampa Bay Buccaneers</option>
+          <option value="TEN">Tennessee Titans</option>
+          <option value="WSH">Washington Commanders</option>
+          <option value="FA">Free Agent</option>
+        </select>
       </form>
       <div class="panel">
         <table>
